@@ -60,13 +60,6 @@ jobs:
       - name: Build
         run: npm run tauri build -- --bundles dmg
 
-      - name: Rename (add arch suffix)
-        run: |
-          for f in src-tauri/target/release/bundle/dmg/*.dmg; do
-            base="${f%.dmg}"
-            mv "$f" "${base}_aarch64.dmg"
-          done
-
       - name: Upload macOS ARM disk image
         uses: actions/upload-artifact@v5
         with:
@@ -94,13 +87,6 @@ jobs:
 
       - name: Build
         run: npm run tauri build -- --bundles dmg --target x86_64-apple-darwin
-
-      - name: Rename (add arch suffix)
-        run: |
-          for f in src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg; do
-            base="${f%.dmg}"
-            mv "$f" "${base}_x86_64.dmg"
-          done
 
       - name: Upload macOS Intel disk image
         uses: actions/upload-artifact@v5
@@ -188,7 +174,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/windows/*.exe
-            artifacts/macos/*.dmg
-            artifacts/linux/*.deb
-            artifacts/linux/*.AppImage
+            artifacts/windows/**/*.exe
+            artifacts/macos/**/*.dmg
+            artifacts/linux/**/*.deb
+            artifacts/linux/**/*.AppImage
