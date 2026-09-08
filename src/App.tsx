@@ -1,5 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { TutorialOverlay } from "./components/TutorialOverlay";
+import {
+  TutorialPhase,
+  nextPhase,
+} from "./lib/tutorial";
 import "./App.css";
 
 interface FileEntry {
@@ -14,12 +19,60 @@ interface FileEntry {
 type View = "home" | "scanning" | "results";
 
 function App() {
+  // Tutorial state
+  const [tutorial, setTutorial] = useState<{
+    active: boolean;
+    phase: TutorialPhase;
+  }>({ active: false, phase: "welcome" });
+
+  // App state
   const [view, setView] = useState<View>("home");
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freed, setFreed] = useState<number>(0);
-  const [scanPath] = useState<string>("");
   const [error, setError] = useState<string>("");
+
+  // ─── Tutorial navigation ───────────────────────────────────
+
+  function startTutorial() {
+    setTutorial({ active: true, phase: "welcome" });
+    setView("home");
+    setFiles([]);
+    setSelected(new Set());
+    setFreed(0);
+    setError("");
+  }
+
+  function handleTutorialNext() {
+    const next = nextPhase(tutorial.phase);
+    if (next === tutorial.phase) return;
+
+    // When advancing from "welcome" → "scanning", kick off the scan
+    if (next === "scanning") {
+      startScan();
+    }
+
+    setTutorial((t) => ({ ...t, phase: next }));
+  }
+
+  function skipTutorial() {
+    setTutorial({ active: false, phase: "welcome" });
+  }
+
+  // Auto-advance when certain conditions are met
+  useEffect(() => {
+    if (!tutorial.active) return;
+    if (tutorial.phase === "scanning" && view === "results") {
+      // Scan completed → advance to results step
+      setTutorial((t) => ({ ...t, phase: "results" }));
+    }
+    if (tutorial.phase === "results" && freed > 0) {
+      // Files deleted → advance to cleanup
+      setTutorial((t) => ({ ...t, phase: "cleanup" }));
+    }
+  }, [tutorial.active, tutorial.phase, view, freed]);
+
+  // ─── Scanner ───────────────────────────────────────────────
 
   async function startScan() {
     setView("scanning");
@@ -27,17 +80,8 @@ function App() {
     setSelected(new Set());
     setFreed(0);
 
-    // Get home dir if no custom path
-    let path = scanPath.trim();
-    if (!path) {
-      try {
-        path = await invoke<string>("home_dir");
-      } catch {
-        path = "~";
-      }
-    }
-
     try {
+      const path = await invoke<string>("home_dir");
       const results = await invoke<FileEntry[]>("scan_large_files", {
         path,
         limit: 20,
@@ -84,6 +128,8 @@ function App() {
     return `${bytes} B`;
   }
 
+  // ─── Render ────────────────────────────────────────────────
+
   return (
     <>
       <header className="app-header">
@@ -93,7 +139,13 @@ function App() {
         </div>
         <div className="app-header__controls">
           {view !== "home" && (
-            <button className="app-header__btn" onClick={() => setView("home")}>
+            <button
+              className="app-header__btn"
+              onClick={() => {
+                setView("home");
+                skipTutorial();
+              }}
+            >
               ←
             </button>
           )}
@@ -104,17 +156,21 @@ function App() {
         {/* HOME */}
         {view === "home" && (
           <div className="app-welcome">
-            <h1 className="app-welcome__title">Your AI Agent. Your Computer.</h1>
+            <h1 className="app-welcome__title">
+              Your AI Agent. Your Computer.
+            </h1>
             <p className="app-welcome__subtitle">
               Do what cloud chatbots can't — clean files, build apps, automate
               your desktop. No signup, runs locally.
             </p>
 
             <div className="app-actions">
-              <button className="app-action-btn" onClick={startScan}>
+              <button className="app-action-btn" onClick={startTutorial}>
                 <span className="app-action-btn__icon">📁</span>
                 <span className="app-action-btn__text">
-                  <span className="app-action-btn__label">Find Large Files</span>
+                  <span className="app-action-btn__label">
+                    Find Large Files
+                  </span>
                   <span className="app-action-btn__desc">
                     Free up space in 60 seconds
                   </span>
@@ -124,7 +180,9 @@ function App() {
               <button className="app-action-btn" onClick={startScan}>
                 <span className="app-action-btn__icon">🧹</span>
                 <span className="app-action-btn__text">
-                  <span className="app-action-btn__label">Clean Downloads</span>
+                  <span className="app-action-btn__label">
+                    Clean Downloads
+                  </span>
                   <span className="app-action-btn__desc">
                     Organize and archive old files
                   </span>
@@ -134,7 +192,9 @@ function App() {
               <button className="app-action-btn" onClick={startScan}>
                 <span className="app-action-btn__icon">💬</span>
                 <span className="app-action-btn__text">
-                  <span className="app-action-btn__label">Ask an Agent</span>
+                  <span className="app-action-btn__label">
+                    Ask an Agent
+                  </span>
                   <span className="app-action-btn__desc">
                     Plain English, local actions
                   </span>
@@ -165,7 +225,7 @@ function App() {
               <div>
                 <h2 className="results-title">
                   {freed > 0
-                    ? `Freed ${humanSize(freed)} across ${selected.size} files`
+                    ? `Freed ${humanSize(freed)}`
                     : `Top ${files.length} Largest Files`}
                 </h2>
                 <p className="results-subtitle">
@@ -180,9 +240,9 @@ function App() {
                 )}
                 <button
                   className="btn-secondary"
-                  onClick={() => {
-                    setSelected(new Set(files.map((f) => f.path)));
-                  }}
+                  onClick={() =>
+                    setSelected(new Set(files.map((f) => f.path)))
+                  }
                 >
                   Select All
                 </button>
@@ -227,6 +287,15 @@ function App() {
         </span>
         <span>v0.1.0</span>
       </footer>
+
+      {/* ─── Tutorial Overlay ─────────────────────────────────── */}
+      {tutorial.active && (
+        <TutorialOverlay
+          phase={tutorial.phase}
+          onNext={handleTutorialNext}
+          onSkip={skipTutorial}
+        />
+      )}
     </>
   );
 }

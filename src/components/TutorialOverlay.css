@@ -1,0 +1,135 @@
+/* Tutorial overlay — full-screen backdrop with spotlight */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 10, 20, 0.85);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tutorial-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Card */
+.tutorial-card {
+  position: relative;
+  z-index: 101;
+  max-width: 440px;
+  width: 90%;
+  padding: 32px;
+  background: var(--laverdi-surface);
+  border: 1px solid var(--laverdi-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-card__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--laverdi-text);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.tutorial-card__desc {
+  font-size: 14px;
+  color: var(--laverdi-text-muted);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+/* Progress bar */
+.tutorial-progress {
+  height: 4px;
+  background: var(--laverdi-border);
+  border-radius: 2px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.tutorial-progress__fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--laverdi-primary),
+    var(--laverdi-accent)
+  );
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.tutorial-progress__label {
+  font-size: 11px;
+  color: var(--laverdi-text-muted);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Actions */
+.tutorial-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tutorial-skip {
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--laverdi-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tutorial-skip:hover {
+  color: var(--laverdi-text);
+}
+
+.tutorial-next {
+  padding: 12px 28px;
+  background: linear-gradient(
+    135deg,
+    var(--laverdi-primary),
+    #6366f1
+  );
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.tutorial-next:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
