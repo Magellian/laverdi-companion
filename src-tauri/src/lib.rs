@@ -4,6 +4,10 @@ use tauri::{
     Manager,
 };
 
+mod scanner;
+
+use scanner::{scan_large_files, delete_file, home_dir};
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -74,7 +78,12 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            scan_large_files,
+            delete_file,
+            home_dir
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
