@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { TutorialOverlay } from "./components/TutorialOverlay";
+import { ChatView, Message as ChatMessage } from "./components/ChatView";
 import {
   TutorialPhase,
   nextPhase,
@@ -16,7 +17,7 @@ interface FileEntry {
   modified: number | null;
 }
 
-type View = "home" | "scanning" | "results";
+type View = "home" | "scanning" | "results" | "chat";
 
 function App() {
   // Tutorial state
@@ -31,6 +32,44 @@ function App() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freed, setFreed] = useState<number>(0);
   const [error, setError] = useState<string>("");
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  // ─── Chat ──────────────────────────────────────────────────
+
+  async function sendChatMessage(text: string) {
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: text,
+      timestamp: Date.now(),
+    };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatLoading(true);
+
+    try {
+      const response = await invoke<string>("run_agent", { prompt: text });
+      const agentMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "agent",
+        content: response,
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, agentMsg]);
+    } catch (e: any) {
+      const errMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "agent",
+        content: typeof e === "string" ? e : e?.message || "Agent failed to respond",
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, errMsg]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   // ─── Tutorial navigation ───────────────────────────────────
 
@@ -189,7 +228,7 @@ function App() {
                 </span>
               </button>
 
-              <button className="app-action-btn" onClick={startScan}>
+              <button className="app-action-btn" onClick={() => setView("chat")}>
                 <span className="app-action-btn__icon">💬</span>
                 <span className="app-action-btn__text">
                   <span className="app-action-btn__label">
@@ -277,6 +316,16 @@ function App() {
               </p>
             )}
           </div>
+        )}
+
+        {/* CHAT */}
+        {view === "chat" && (
+          <ChatView
+            messages={chatMessages}
+            loading={chatLoading}
+            onSend={sendChatMessage}
+            onBack={() => setView("home")}
+          />
         )}
       </main>
 

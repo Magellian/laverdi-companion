@@ -5,8 +5,10 @@ use tauri::{
 };
 
 mod scanner;
+mod agent;
 
 use scanner::{scan_large_files, delete_file, home_dir};
+use agent::{run_agent, agent_status};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -82,7 +84,9 @@ pub fn run() {
             greet,
             scan_large_files,
             delete_file,
-            home_dir
+            home_dir,
+            run_agent,
+            agent_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
