@@ -139,3 +139,27 @@ pub fn home_dir() -> Result<String, String> {
         .map(|p| p.to_string_lossy().to_string())
         .ok_or_else(|| "Could not determine home directory".to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_human_size() {
+        assert_eq!(human_size(0), "0 B");
+        assert_eq!(human_size(1024), "1.0 KB");
+        assert_eq!(human_size(1048576), "1.0 MB");
+        assert_eq!(human_size(1073741824), "1.0 GB");
+    }
+
+    #[test]
+    fn test_scan_real_dir() {
+        let home = dirs::home_dir().unwrap();
+        let path = home.to_string_lossy().to_string();
+        let res = scan_large_files(path, 50).unwrap();
+        assert!(!res.is_empty(), "scan of home dir returned no files");
+        for w in res.windows(2) {
+            assert!(w[0].size >= w[1].size, "not sorted descending");
+        }
+    }
+}
