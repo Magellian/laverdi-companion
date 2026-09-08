@@ -1,0 +1,121 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build Tauri (Windows)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'LaVerdi Companion v__VERSION__'
+          releaseBody: 'See the assets to download this version.'
+          releaseDraft: false
+          prerelease: false
+          args: '--target x86_64-pc-windows-msvc'
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build Tauri (macOS universal)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE_CODE_SIGNING: false
+          APPLE_CERTIFICATE: ''
+          APPLE_CERTIFICATE_PASSWORD: ''
+          APPLE_SIGNING_IDENTITY: ''
+          APPLE_ID: ''
+          APPLE_TEAM_ID: ''
+          APPLE_PASSWORD: ''
+        with:
+          tagName: v__VERSION__
+          releaseName: 'LaVerdi Companion v__VERSION__'
+          releaseBody: 'See the assets to download this version.'
+          releaseDraft: false
+          prerelease: false
+          args: '--target universal-apple-darwin'
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build Tauri (Linux)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'LaVerdi Companion v__VERSION__'
+          releaseBody: 'See the assets to download this version.'
+          releaseDraft: false
+          prerelease: false
+          args: '--bundles deb,appimage'
