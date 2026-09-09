@@ -19,28 +19,21 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "scanning",
     title: "Scanning Your Files",
     description:
-      "The agent is walking through your home directory, looking for the biggest space hogs. This usually takes 5-15 seconds.",
+      "The agent is walking through your directory, looking for the biggest space hogs. This usually takes 5-15 seconds.",
     autoAdvance: false, // waits for scan to complete
   },
   {
     id: "results",
     title: "Here's What We Found",
     description:
-      "These are your largest files. Check the boxes next to anything you don't need — old downloads, temp files, duplicates. Don't worry, deleted files go to your Trash.",
-    autoAdvance: false, // waits for user to select & delete
+      "Check the boxes next to anything you don't need. Deleted files go to your Trash — recoverable anytime.",
+    autoAdvance: true, // user clicks Next → overlay dismisses → interact with files
   },
   {
     id: "cleanup",
     title: "Space Freed!",
     description:
-      "Your selected files have been moved to Trash. You can recover them anytime. Want to try something else?",
-    autoAdvance: true,
-  },
-  {
-    id: "done",
-    title: "That Was Your First Agent Action",
-    description:
-      "You just used an AI agent running on your own computer. No cloud, no signup, no privacy concerns. This is what makes LaVerdi different.",
+      "Your selected files have been moved to Trash. You can recover them anytime. That was your first agent action — running entirely on your own computer. No cloud, no signup, no privacy concerns.",
     autoAdvance: true,
   },
 ];
@@ -49,8 +42,7 @@ export type TutorialPhase =
   | "welcome"
   | "scanning"
   | "results"
-  | "cleanup"
-  | "done";
+  | "cleanup";
 
 export function nextPhase(current: TutorialPhase): TutorialPhase {
   const order: TutorialPhase[] = [
@@ -58,11 +50,10 @@ export function nextPhase(current: TutorialPhase): TutorialPhase {
     "scanning",
     "results",
     "cleanup",
-    "done",
   ];
   const idx = order.indexOf(current);
   if (idx < order.length - 1) return order[idx + 1];
-  return "done";
+  return "cleanup";
 }
 
 export function progressPercent(phase: TutorialPhase): number {
@@ -71,7 +62,6 @@ export function progressPercent(phase: TutorialPhase): number {
     "scanning",
     "results",
     "cleanup",
-    "done",
   ];
   const idx = order.indexOf(phase);
   return Math.round((idx / (order.length - 1)) * 100);

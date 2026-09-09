@@ -405,3 +405,37 @@ body {
   color: var(--laverdi-accent);
   flex-shrink: 0;
 }
+
+/* Results footer */
+.results-footer {
+  padding: 12px 0 0;
+  border-top: 1px solid var(--laverdi-border);
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-ghost {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--laverdi-border);
+  border-radius: 8px;
+  color: var(--laverdi-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--laverdi-text-muted);
+  color: var(--laverdi-text);
+}
+
+.results-footer__hint {
+  font-size: 11px;
+  color: var(--laverdi-text-muted);
+  opacity: 0.6;
+}

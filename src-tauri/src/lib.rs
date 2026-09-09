@@ -7,7 +7,7 @@ use tauri::{
 mod scanner;
 mod agent;
 
-use scanner::{scan_large_files, delete_file, home_dir};
+use scanner::{scan_large_files, delete_file, home_dir, downloads_dir};
 use agent::{run_agent, agent_status};
 
 #[tauri::command]
@@ -85,6 +85,7 @@ pub fn run() {
             scan_large_files,
             delete_file,
             home_dir,
+            downloads_dir,
             run_agent,
             agent_status
         ])

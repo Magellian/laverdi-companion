@@ -140,6 +140,17 @@ pub fn home_dir() -> Result<String, String> {
         .ok_or_else(|| "Could not determine home directory".to_string())
 }
 
+/// Get the user's downloads directory.
+#[tauri::command]
+pub fn downloads_dir() -> Result<String, String> {
+    dirs::download_dir()
+        .or_else(|| {
+            dirs::home_dir().map(|h| h.join("Downloads"))
+        })
+        .map(|p| p.to_string_lossy().to_string())
+        .ok_or_else(|| "Could not determine downloads directory".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -102,14 +102,17 @@ function App() {
   useEffect(() => {
     if (!tutorial.active) return;
     if (tutorial.phase === "scanning" && view === "results") {
-      // Scan completed → advance to results step
+      // Scan completed → skip to showing results (overlay auto-dismissed for this phase)
       setTutorial((t) => ({ ...t, phase: "results" }));
     }
-    if (tutorial.phase === "results" && freed > 0) {
-      // Files deleted → advance to cleanup
-      setTutorial((t) => ({ ...t, phase: "cleanup" }));
+    if (freed > 0) {
+      // Files deleted → advance to cleanup step (re-show overlay)
+      setTutorial((t) => ({
+        ...t,
+        phase: t.phase === "results" ? "cleanup" : t.phase,
+      }));
     }
-  }, [tutorial.active, tutorial.phase, view, freed]);
+  }, [tutorial.active, view, freed]);
 
   // ─── Scanner ───────────────────────────────────────────────
 
@@ -124,6 +127,26 @@ function App() {
       const results = await invoke<FileEntry[]>("scan_large_files", {
         path,
         limit: 20,
+      });
+      setFiles(results);
+      setView("results");
+    } catch (e: any) {
+      setError(typeof e === "string" ? e : e?.message || "Scan failed");
+      setView("home");
+    }
+  }
+
+  async function startDownloadsScan() {
+    setView("scanning");
+    setError("");
+    setSelected(new Set());
+    setFreed(0);
+
+    try {
+      const path = await invoke<string>("downloads_dir");
+      const results = await invoke<FileEntry[]>("scan_large_files", {
+        path,
+        limit: 30,
       });
       setFiles(results);
       setView("results");
@@ -216,14 +239,14 @@ function App() {
                 </span>
               </button>
 
-              <button className="app-action-btn" onClick={startScan}>
+              <button className="app-action-btn" onClick={startDownloadsScan}>
                 <span className="app-action-btn__icon">🧹</span>
                 <span className="app-action-btn__text">
                   <span className="app-action-btn__label">
                     Clean Downloads
                   </span>
                   <span className="app-action-btn__desc">
-                    Organize and archive old files
+                    Find old files in Downloads
                   </span>
                 </span>
               </button>
@@ -315,6 +338,22 @@ function App() {
                 No large files found — your disk is clean!
               </p>
             )}
+
+            {/* Footer bar */}
+            <div className="results-footer">
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  setView("home");
+                  skipTutorial();
+                }}
+              >
+                ← Home
+              </button>
+              <span className="results-footer__hint">
+                Tip: Deleted files go to Trash — recoverable anytime
+              </span>
+            </div>
           </div>
         )}
 
@@ -334,11 +373,11 @@ function App() {
           <span className="app-status__dot" />
           Agent ready
         </span>
-        <span>v0.1.0</span>
+        <span>v0.3.0</span>
       </footer>
 
       {/* ─── Tutorial Overlay ─────────────────────────────────── */}
-      {tutorial.active && (
+      {tutorial.active && tutorial.phase !== "results" && (
         <TutorialOverlay
           phase={tutorial.phase}
           onNext={handleTutorialNext}

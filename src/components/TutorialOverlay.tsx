@@ -43,7 +43,7 @@ export function TutorialOverlay({ phase, onNext, onSkip }: Props) {
           </button>
           {step?.autoAdvance !== false && (
             <button className="tutorial-next" onClick={onNext}>
-              {phase === "done" ? "Got it!" : "Next →"}
+              {phase === "cleanup" ? "Got it!" : "Next →"}
             </button>
           )}
         </div>
